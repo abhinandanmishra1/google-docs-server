@@ -1,18 +1,20 @@
 const router = require("express").Router();
 const passport = require("passport");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 
 const CLIENT_URL = process.env.CLIENT_URL;
 
 router.get("/login/success", (req, res) => {
   if (req.user) {
+    const user = jwt.decode(req.user.id_token);
+    console.log({ user });
     res.status(200).json({
       success: true,
-      message: "successfull",
       user: {
-        name: req.user.displayName,
-        picture: req.user.photos[0]?.value,
-        id: req.user.id,
+        name: user?.name,
+        picture: user?.picture,
+        id: user?.sub,
       },
       //   cookies: req.cookies
     });

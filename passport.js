@@ -12,7 +12,7 @@ passport.use(
       clientSecret: GOOGLE_CLIENT_SECRET,
       callbackURL: "/auth/google/callback",
     },
-    function (accessToken, refreshToken, profile, done) {
+    function (accessToken, refreshToken, profile, done) {    
       done(null, profile);
     }
   )
