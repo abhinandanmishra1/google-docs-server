@@ -1,9 +1,10 @@
 const { default: mongoose } = require("mongoose");
 const Document = require("../models/Document");
+const { default: axios } = require("axios");
 
 const router = require("express").Router();
 
-// baseurr = "/documents"
+// baseurl = "/documents"
 
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
@@ -17,11 +18,20 @@ router.get("/:id", async (req, res) => {
 
 router.get("", async (req, res) => {
   const { limit = 10, offset = 0 } = req.body;
-  const { user } = req;
+  const token = req.headers.authorization?.split(" ")?.[1];
 
-  if (!user) {
+  if(!token) {
     return res.status(401).send({ message: "unauthorized" });
   }
+
+  const { data: userInfo } = await axios.get(
+    `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   try {
     const result = await Document.aggregate([
@@ -31,7 +41,7 @@ router.get("", async (req, res) => {
           data: [
             {
               $match: {
-                createdBy: user.id,
+                createdBy: userInfo.user_id,
               },
             },
             {
@@ -62,13 +72,20 @@ router.get("", async (req, res) => {
 });
 
 router.post("", async (req, res) => {
-  const user = req.user;
+  const token = req.headers.authorization?.split(" ")?.[1];
 
-  console.log(user);
-
-  if (!user) {
+  if(!token) {
     return res.status(401).send({ message: "unauthorized" });
   }
+
+  const { data: userInfo } = await axios.get(
+    `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   try {
     const documentId = new mongoose.Types.ObjectId();
@@ -77,11 +94,11 @@ router.post("", async (req, res) => {
       documentId,
       data: {},
       name: "",
-      createdBy: user.id,
+      createdBy: userInfo.user_id,
       createdAt: Date.now(),
       access: [
         {
-          user: user.id,
+          user: userInfo.user_id,
           type: "admin",
         },
       ],

@@ -2,22 +2,40 @@ const router = require("express").Router();
 const passport = require("passport");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
+const { default: axios } = require("axios");
+const { getUserByGoogleId } = require("../controllers/UserController");
+
+const oAuth2Client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  "postmessage"
+);
 
 const CLIENT_URL = process.env.CLIENT_URL;
 
-router.get("/login/success", (req, res) => {
-  if (req.user) {
-    const user = jwt.decode(req.user.id_token);
-    console.log({ user });
-    res.status(200).json({
-      success: true,
-      user: {
-        name: user?.name,
-        picture: user?.picture,
-        id: user?.sub,
-      },
-      //   cookies: req.cookies
-    });
+router.get("/login/success", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")?.[1];
+  if (token) {
+    try {
+      const { data: userInfo } = await axios.get(
+        `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const user = await getUserByGoogleId(userInfo.user_id);
+
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (err) {
+      res.status(500).json({ msg: "Unauthorized access" });
+    }
   } else {
     res.status(401).json({
       success: false,
@@ -38,7 +56,22 @@ router.get("/logout", (req, res) => {
   res.redirect(CLIENT_URL);
 });
 
-router.get("/google", passport.authenticate("google", { scope: ["profile"] }));
+router.post("/google", async (req, res) => {
+  const { tokens } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
+
+  res.json(tokens);
+});
+
+router.post("/google/refresh-token", async (req, res) => {
+  const user = new UserRefreshClient(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    req.body.refreshToken
+  );
+
+  const { credentials } = await user.refreshAccessToken(); // optain new tokens
+  res.json(credentials);
+});
 
 router.get(
   "/google/callback",

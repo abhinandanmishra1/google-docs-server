@@ -10,6 +10,7 @@ const passportSetup = require("./passport");
 
 const authRoute = require("./routes/auth");
 const documentRoute = require("./routes/document");
+const userRoute = require("./routes/user");
 
 const bodyParser = require("body-parser");
 
@@ -71,3 +72,4 @@ app.post("/register", (req, res) => {
 
 app.use("/auth", authRoute);
 app.use("/documents", documentRoute);
+app.use("/users", userRoute);

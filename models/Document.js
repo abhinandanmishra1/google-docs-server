@@ -5,6 +5,7 @@ const UserAccessSchema = new Schema({
   user: String,
   type: String,
 });
+
 const DocumentSchema = new Schema({
   // _id: String, // id of each version of document
   documentId: Schema.Types.ObjectId, // real documentId
