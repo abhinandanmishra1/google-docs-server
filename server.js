@@ -36,7 +36,7 @@ app.use(passport.session());
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: [process.env.CLIENT_URL,'http://localhost:5173', 'https://abhidocs.vercel.app', 'https://abhidocs.vercel.app/'],
     methods: "GET,POST,PUT,DELETE",
     credentials: true,
   })

@@ -34,10 +34,10 @@ router.get("/login/success", async (req, res) => {
         user,
       });
     } catch (err) {
-      res.status(500).json({ msg: "Unauthorized access" });
+      res.status(400).json({ err });
     }
   } else {
-    res.status(401).json({
+    res.status(403).json({
       success: false,
       message: "unauthorized",
     });
@@ -57,9 +57,14 @@ router.get("/logout", (req, res) => {
 });
 
 router.post("/google", async (req, res) => {
-  const { tokens } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
-
-  res.json(tokens);
+  try {
+    const { tokens } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
+    res.json(tokens);
+  }catch(err) {
+    res.status(500).json({
+      err,
+    });
+  }
 });
 
 router.post("/google/refresh-token", async (req, res) => {
