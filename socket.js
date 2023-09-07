@@ -3,16 +3,21 @@ const http = require("http");
 require("dotenv").config();
 
 const {
-    updateDocument,
-    createNewVersionDocument,
-    getDocument,
-  } = require("./controllers/DocumentController");
-  
+  updateDocument,
+  createNewVersionDocument,
+  getDocument,
+} = require("./controllers/DocumentController");
+
 const setUpSocketServer = (app) => {
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL,
+      origin: [
+        process.env.CLIENT_URL,
+        "http://localhost:5173",
+        "https://abhidocs.vercel.app",
+        "https://abhidocs.vercel.app/",
+      ],
       methods: ["GET", "POST"],
     },
   });
@@ -27,7 +32,7 @@ const setUpSocketServer = (app) => {
         // const document = await createNewVersionDocument(documentId, user);  -> TODO: how to get user?
         const document = await getDocument(documentId);
         mongoDocumentId = document?._id;
-        console.log("document", documentId, document)
+        console.log("document", documentId, document);
         socket.join(documentId);
         socket.emit("load-document", document);
       } catch (err) {
@@ -40,7 +45,7 @@ const setUpSocketServer = (app) => {
 
       socket.on("save-document", (data) => {
         console.log("save document", data);
-        updateDocument(mongoDocumentId, data);  // updating the version data 
+        updateDocument(mongoDocumentId, data); // updating the version data
       });
     });
   });
