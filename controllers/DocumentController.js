@@ -56,7 +56,7 @@ const getDocument = async (id, user_id) => {
           },
           { $unwind: "$access" },
         ],
-        data: [{ $project: { _id: 0 } }],
+        data: [{ $project: { access: 0 } }],
       },
     },
     { $unwind: { path: "$permissions", preserveNullAndEmptyArrays: true } },
