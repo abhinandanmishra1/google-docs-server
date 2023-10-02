@@ -34,40 +34,48 @@ async function createNewVersionDocument(documentId, user) {
 
 const getDocument = async (id, user_id) => {
   // we have to check what access does this user have for this document
-  id = new mongoose.Types.ObjectId(id);
-  const result = await Document.aggregate(
-    [
-      {
-        $match: {
-          documentId: id,
-        },
+  const documentId = new mongoose.Types.ObjectId(id);
+  const userId = new mongoose.Types.ObjectId(user_id);
+
+  const result = await Document.aggregate([
+    {
+      $match: {
+        documentId,
       },
-      {
-        $facet: {
-          permissions: [
-            {
-              $project: {
-                access: "$access.type",
-                _id: 0,
-              },
+    },
+    {
+      $facet: {
+        permissions: [
+          {
+            $match: {
+              "access.user": userId,
             },
-            { $unwind: { path: "$access" } },
-          ],
-          data: [{ $project: { access: 0 } }],
-        },
+          },
+          {
+            $project: { _id: 0, "access.type": 1 },
+          },
+          { $unwind: "$access" },
+        ],
+        data: [{ $project: { _id: 0 } }],
       },
-      { $unwind: { path: "$data" } },
-      { $unwind: { path: "$permissions" } },
-    ],
-  );
-  
+    },
+    { $unwind: { path: "$permissions", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: "$data" } },
+    {
+      $project: {
+        permissions: "$permissions.access.type",
+        data: 1,
+      },
+    },
+  ]);
+
   const document = result[0]?.data;
-  const permission = result[0]?.permissions.access | document.sharedWithEveryone;
+  const permission = result[0]?.permissions | document?.sharedWithEveryone;
 
   const role = getAccessRole(permission);
   return {
     document,
-    role
+    role,
   };
 };
 
