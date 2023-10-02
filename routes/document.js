@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose");
 const Document = require("../models/Document");
 const { default: axios } = require("axios");
+const { getDocument } = require("../controllers/DocumentController");
 
 const router = require("express").Router();
 
@@ -8,9 +9,15 @@ const router = require("express").Router();
 
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
+
   try {
-    const document = await Document.findById(id);
-    res.status(201).send(document);
+    const { document, role } = await getDocument(id, req.user._id);
+
+    if (document != null) {
+      res.status(200).send({document, role});
+    } else {
+      res.status(401).send({ error: "Document not found" });
+    }
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
@@ -18,20 +25,7 @@ router.get("/:id", async (req, res) => {
 
 router.get("", async (req, res) => {
   const { limit = 10, offset = 0 } = req.body;
-  const token = req.headers.authorization?.split(" ")?.[1];
-
-  if(!token) {
-    return res.status(401).send({ message: "unauthorized" });
-  }
-
-  const { data: userInfo } = await axios.get(
-    `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
+  const { user: userInfo } = req;
 
   try {
     const result = await Document.aggregate([
@@ -41,7 +35,7 @@ router.get("", async (req, res) => {
           data: [
             {
               $match: {
-                createdBy: userInfo.user_id,
+                createdBy: userInfo._id,
               },
             },
             {
@@ -72,20 +66,7 @@ router.get("", async (req, res) => {
 });
 
 router.post("", async (req, res) => {
-  const token = req.headers.authorization?.split(" ")?.[1];
-
-  if(!token) {
-    return res.status(401).send({ message: "unauthorized" });
-  }
-
-  const { data: userInfo } = await axios.get(
-    `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
+  const { user: userInfo } = req;
 
   try {
     const documentId = new mongoose.Types.ObjectId();
@@ -94,12 +75,12 @@ router.post("", async (req, res) => {
       documentId,
       data: {},
       name: "",
-      createdBy: userInfo.user_id,
+      createdBy: userInfo._id,
       createdAt: Date.now(),
       access: [
         {
-          user: userInfo.user_id,
-          type: "admin",
+          user: userInfo._id,
+          type: 4, // 4 means admin
         },
       ],
     });

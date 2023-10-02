@@ -7,6 +7,8 @@ const {
   createNewVersionDocument,
   getDocument,
 } = require("./controllers/DocumentController");
+const validateToken = require("./helpers/validateToken");
+const { getAccessRole } = require("./enums/PermissionEnum");
 
 const setUpSocketServer = (app) => {
   const server = http.createServer(app);
@@ -23,18 +25,25 @@ const setUpSocketServer = (app) => {
   });
 
   io.on("connection", (socket) => {
+    const { token } = socket.handshake.query;
+
     socket.on("get-document", async (documentId) => {
       if (!documentId) return;
-
       let mongoDocumentId = null;
 
       try {
         // const document = await createNewVersionDocument(documentId, user);  -> TODO: how to get user?
-        const document = await getDocument(documentId);
+        const user = await validateToken(token);
+
+        const { document, role } = await getDocument(documentId, user._id);
+
+        if (document == null) {
+          throw new Error("Document not found");
+        }
+
         mongoDocumentId = document?._id;
-        console.log("document", documentId, document);
         socket.join(documentId);
-        socket.emit("load-document", document);
+        socket.emit("load-document", { document, role });
       } catch (err) {
         console.log(err);
       }
@@ -44,7 +53,6 @@ const setUpSocketServer = (app) => {
       });
 
       socket.on("save-document", (data) => {
-        console.log("save document", data);
         updateDocument(mongoDocumentId, data); // updating the version data
       });
     });

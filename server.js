@@ -17,6 +17,8 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
+const { authenticate } = require("./middleware/auth_middleware");
+
 app.use(
   cookieSession({
     name: "session",
@@ -34,9 +36,23 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Request logger start
+const requestLogger = (request, response, next) => {
+  console.log(`${request.method} url:: ${request.url}`);
+  next();
+};
+
+app.use(requestLogger);
+// Request Logger end
+
 app.use(
   cors({
-    origin: [process.env.CLIENT_URL,'http://localhost:5173', 'https://abhidocs.vercel.app', 'https://abhidocs.vercel.app/'],
+    origin: [
+      process.env.CLIENT_URL,
+      "http://localhost:5173",
+      "https://abhidocs.vercel.app",
+      "https://abhidocs.vercel.app/",
+    ],
     methods: "GET,POST,PUT,DELETE",
     credentials: true,
   })
@@ -71,5 +87,5 @@ app.post("/register", (req, res) => {
 });
 
 app.use("/auth", authRoute);
-app.use("/documents", documentRoute);
-app.use("/users", userRoute);
+app.use("/documents", authenticate, documentRoute);
+app.use("/users", authenticate, userRoute);

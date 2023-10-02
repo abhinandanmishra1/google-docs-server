@@ -1,4 +1,6 @@
+const { default: mongoose } = require("mongoose");
 const Document = require("../models/Document");
+const { getAccessRole } = require("../enums/PermissionEnum");
 
 async function createNewVersionDocument(documentId, user) {
   const document = await Document.find({ documentId });
@@ -30,14 +32,47 @@ async function createNewVersionDocument(documentId, user) {
   return newDocument;
 }
 
-const getDocument = async (id) => {
-  const document = await Document.findOne({ documentId: id });
+const getDocument = async (id, user_id) => {
+  // we have to check what access does this user have for this document
+  id = new mongoose.Types.ObjectId(id);
+  const result = await Document.aggregate(
+    [
+      {
+        $match: {
+          documentId: id,
+        },
+      },
+      {
+        $facet: {
+          permissions: [
+            {
+              $project: {
+                access: "$access.type",
+                _id: 0,
+              },
+            },
+            { $unwind: { path: "$access" } },
+          ],
+          data: [{ $project: { access: 0 } }],
+        },
+      },
+      { $unwind: { path: "$data" } },
+      { $unwind: { path: "$permissions" } },
+    ],
+  );
+  
+  const document = result[0]?.data;
+  const permission = result[0]?.permissions.access | document.sharedWithEveryone;
 
-  return document;
-}
+  const role = getAccessRole(permission);
+  return {
+    document,
+    role
+  };
+};
 
 async function updateDocument(id, data) {
-  if(!id) return;
+  if (!id) return;
 
   await Document.updateOne({ _id: id }, { ...data });
 }
@@ -45,5 +80,5 @@ async function updateDocument(id, data) {
 module.exports = {
   createNewVersionDocument,
   updateDocument,
-  getDocument
+  getDocument,
 };

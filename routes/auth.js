@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const passport = require("passport");
 require("dotenv").config();
-const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const { default: axios } = require("axios");
 const { getUserByGoogleId } = require("../controllers/UserController");
@@ -16,31 +15,25 @@ const CLIENT_URL = process.env.CLIENT_URL;
 
 router.get("/login/success", async (req, res) => {
   const token = req.headers.authorization?.split(" ")?.[1];
-  if (token) {
-    try {
-      const { data: userInfo } = await axios.get(
-        `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
 
-      const user = await getUserByGoogleId(userInfo.user_id);
+  try {
+    const { data: userInfo } = await axios.get(
+      `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-      res.status(200).json({
-        success: true,
-        user,
-      });
-    } catch (err) {
-      res.status(400).json({ err });
-    }
-  } else {
-    res.status(403).json({
-      success: false,
-      message: "unauthorized",
+    const user = await getUserByGoogleId(userInfo.user_id);
+
+    res.status(200).json({
+      success: true,
+      user,
     });
+  } catch (err) {
+    res.status(400).json({ err });
   }
 });
 
@@ -60,7 +53,7 @@ router.post("/google", async (req, res) => {
   try {
     const { tokens } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
     res.json(tokens);
-  }catch(err) {
+  } catch (err) {
     res.status(500).json({
       err,
     });

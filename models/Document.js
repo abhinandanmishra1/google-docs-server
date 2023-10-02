@@ -1,9 +1,17 @@
 const { Schema, model } = require("mongoose");
 
 // every new instance of document opened will create a new version
+
+/*
+ Permissions defined 
+ 1: View
+ 2: Edit
+ 4: All
+*/
+
 const UserAccessSchema = new Schema({
-  user: String,
-  type: String,
+  user: Schema.Types.ObjectId,
+  type: Number,  
 });
 
 const DocumentSchema = new Schema({
@@ -12,10 +20,10 @@ const DocumentSchema = new Schema({
   data: Object,
   name: String,
   createdAt: { type: Date, default: Date.now() },
-  createdBy: String, // storing on basis of google.user.id
+  createdBy: Schema.Types.ObjectId, // storing on basis of google.user.id
   modifiedAt: { type: Date, default: Date.now() },
-  modifiedBy: String,
-  sharedWithEveryone: { type: Boolean, default: false },
+  modifiedBy: Schema.Types.ObjectId,
+  sharedWithEveryone: { type: Number, default: 0 },
   access: [UserAccessSchema],
 });
 
