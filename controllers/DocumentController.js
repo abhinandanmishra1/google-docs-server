@@ -9,7 +9,7 @@ async function createNewVersionDocument(documentId, user) {
     if (!document.modifiedBy) {
       await Document.updateOne(
         { _id: document._id },
-        { modifiedBy: user.id, modifiedAt: Date.now }
+        { modifiedBy: user.id, modifiedAt: Date.now() }
       );
 
       document.modifiedBy = user.id;
@@ -82,7 +82,7 @@ const getDocument = async (id, user_id) => {
 async function updateDocument(id, data) {
   if (!id) return;
 
-  await Document.updateOne({ _id: id }, { ...data });
+  await Document.updateOne({ _id: id }, { ...data, modifiedAt: Date.now() });
 }
 
 module.exports = {
