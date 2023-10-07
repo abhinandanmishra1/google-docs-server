@@ -95,6 +95,25 @@ router.post("", async (req, res) => {
   }
 });
 
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const data = req.body;
+  try {
+    const documentId = new ObjectId(id);
+
+    const result = await Document.updateOne({
+      documentId,
+    }, { ...data, modifiedAt: Date.now() });
+
+    if (result.upsertedCount) {
+      return res.status(500).send({ message: "Document not found" });
+    }
+    res.status(200).send({ msg: "Document updated successfully" });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   const documentId = new ObjectId(id);
