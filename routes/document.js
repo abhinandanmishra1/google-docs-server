@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose");
 const Document = require("../models/Document");
 const { default: axios } = require("axios");
 const { getDocument } = require("../controllers/DocumentController");
+const { ObjectId } = require("../extras");
 
 const router = require("express").Router();
 
@@ -14,7 +15,7 @@ router.get("/:id", async (req, res) => {
     const { document, role } = await getDocument(id, req.user._id);
 
     if (document != null) {
-      res.status(200).send({document, role});
+      res.status(200).send({ document, role });
     } else {
       res.status(401).send({ error: "Document not found" });
     }
@@ -69,7 +70,7 @@ router.post("", async (req, res) => {
   const { user: userInfo } = req;
 
   try {
-    const documentId = new mongoose.Types.ObjectId();
+    const documentId = new ObjectId();
 
     const result = await Document.create({
       documentId,
@@ -91,6 +92,23 @@ router.post("", async (req, res) => {
     res.status(201).send({ id: documentId });
   } catch (err) {
     res.status(500).send({ message: err.message });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  const documentId = new ObjectId(id);
+
+  try {
+    const result = await Document.deleteOne({ documentId });
+
+    if (result.deletedCount === 0) {
+      return res.status(400).send({ message: "Document not found" });
+    }
+
+    return res.status(200).send({ msg: "Successfully deleted" });
+  } catch (error) {
+    res.send({ error });
   }
 });
 
