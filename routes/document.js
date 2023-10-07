@@ -12,7 +12,7 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const { document, role } = await getDocument(id, req.user._id);
+    const { document, role } = await getDocument(id, req.user.id);
 
     if (document != null) {
       res.status(200).send({ document, role });
@@ -36,7 +36,7 @@ router.get("", async (req, res) => {
           data: [
             {
               $match: {
-                createdBy: userInfo._id,
+                createdBy: userInfo.id,
               },
             },
             {
@@ -67,7 +67,7 @@ router.get("", async (req, res) => {
 });
 
 router.post("", async (req, res) => {
-  const { user: userInfo } = req;
+  const { user: userInfo, body } = req;
 
   try {
     const documentId = new ObjectId();
@@ -76,6 +76,7 @@ router.post("", async (req, res) => {
       documentId,
       data: {},
       name: "",
+      ...body,
       createdBy: userInfo._id,
       createdAt: Date.now(),
       access: [

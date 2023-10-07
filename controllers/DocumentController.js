@@ -56,7 +56,10 @@ const getDocument = async (id, user_id) => {
           },
           { $unwind: "$access" },
         ],
-        data: [{ $project: { access: 0 } }],
+        data: [
+          { $set: { id: "$documentId", versionId: "$_id" } },
+          { $unset: ["_id", "documentId", "access"] },
+        ],
       },
     },
     { $unwind: { path: "$permissions", preserveNullAndEmptyArrays: true } },
@@ -79,10 +82,10 @@ const getDocument = async (id, user_id) => {
   };
 };
 
-async function updateDocument(id, data) {
-  if (!id) return;
+async function updateDocument(documentId, data) {
+  if (!documentId) return;
 
-  await Document.updateOne({ _id: id }, { ...data, modifiedAt: Date.now() });
+  await Document.updateOne({ documentId }, { ...data, modifiedAt: Date.now() });
 }
 
 module.exports = {

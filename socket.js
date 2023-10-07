@@ -35,13 +35,13 @@ const setUpSocketServer = (app) => {
         // const document = await createNewVersionDocument(documentId, user);  -> TODO: how to get user?
         const user = await validateToken(token);
 
-        const { document, role } = await getDocument(documentId, user._id);
+        const { document, role } = await getDocument(documentId, user.id);
 
         if (document == null) {
           throw new Error("Document not found");
         }
 
-        mongoDocumentId = document?._id;
+        mongoDocumentId = document?.id;  // id here means documentId
         socket.join(documentId);
         socket.emit("load-document", { document, role });
       } catch (err) {
@@ -53,6 +53,8 @@ const setUpSocketServer = (app) => {
       });
 
       socket.on("save-document", (data) => {
+        // documentId = mongoDocumentId;  
+        // documentId is for docuemnt's id, _id is for the version of that document
         updateDocument(mongoDocumentId, data); // updating the version data
       });
     });

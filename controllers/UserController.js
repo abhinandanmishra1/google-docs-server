@@ -7,7 +7,29 @@ async function createUser(data) {
 }
 
 async function findOrCreateUser(data) {
-  const user = await Users.findOne({ googleId: data.googleId });
+  const result = await Users.aggregate([
+    {
+      $match: {
+        googleId: data.googleId,
+      },
+    },
+    {
+      $facet: {
+        user: [
+          {
+            $set: {
+              id: "$_id",
+            },
+          },
+          {
+            $unset: ["_id", "googleId", "refreshToken"],
+          },
+        ],
+      },
+    },
+  ]);
+
+  const user = result[0]["user"][0];
 
   if (user) {
     return user;
@@ -29,9 +51,29 @@ async function getUserById(id) {
 }
 
 async function getUserByGoogleId(googleId) {
-  const user = await Users.findOne({ googleId });
+  const result = await Users.aggregate([
+    {
+      $match: {
+        googleId,
+      },
+    },
+    {
+      $facet: {
+        user: [
+          {
+            $set: {
+              id: "$_id",
+            },
+          },
+          {
+            $unset: ["_id", "googleId", "refreshToken"],
+          },
+        ],
+      },
+    },
+  ]);
 
-  return user;
+  return result[0]["user"][0];
 }
 
 module.exports = {
@@ -39,5 +81,5 @@ module.exports = {
   updateUser,
   getUserById,
   findOrCreateUser,
-  getUserByGoogleId
+  getUserByGoogleId,
 };
