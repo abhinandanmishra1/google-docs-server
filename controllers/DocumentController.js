@@ -82,10 +82,10 @@ const getDocument = async (id, user_id) => {
   };
 };
 
-async function updateDocument(documentId, data) {
+async function updateDocument(documentId, data, user_id) {
   if (!documentId) return;
 
-  await Document.updateOne({ documentId }, { ...data, modifiedAt: Date.now() });
+  await Document.updateOne({ documentId }, { ...data, modifiedAt: Date.now(), modifiedBy: user_id });
 }
 
 module.exports = {

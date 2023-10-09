@@ -26,6 +26,7 @@ const setUpSocketServer = (app) => {
 
   io.on("connection", (socket) => {
     const { token } = socket.handshake.query;
+    let user_id = null;
 
     socket.on("get-document", async (documentId) => {
       if (!documentId) return;
@@ -34,6 +35,7 @@ const setUpSocketServer = (app) => {
       try {
         // const document = await createNewVersionDocument(documentId, user);  -> TODO: how to get user?
         const user = await validateToken(token);
+        user_id = user.id;
 
         const { document, role } = await getDocument(documentId, user.id);
 
@@ -55,7 +57,7 @@ const setUpSocketServer = (app) => {
       socket.on("save-document", (data) => {
         // documentId = mongoDocumentId;  
         // documentId is for docuemnt's id, _id is for the version of that document
-        updateDocument(mongoDocumentId, data); // updating the version data
+        updateDocument(mongoDocumentId, data, user_id); // updating the version data
       });
     });
   });

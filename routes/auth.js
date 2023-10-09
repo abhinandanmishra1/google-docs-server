@@ -61,14 +61,20 @@ router.post("/google", async (req, res) => {
 });
 
 router.post("/google/refresh-token", async (req, res) => {
-  const user = new UserRefreshClient(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    req.body.refreshToken
-  );
-
-  const { credentials } = await user.refreshAccessToken(); // optain new tokens
-  res.json(credentials);
+  try {
+    const user = new UserRefreshClient(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      req.body.refreshToken
+    );
+  
+    const { credentials } = await user.refreshAccessToken(); // optain new tokens
+    res.json(credentials);
+  } catch(err) {
+    res.status(500).json({
+      err,
+    });
+  }
 });
 
 router.get(

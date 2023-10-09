@@ -10,7 +10,7 @@ const router = require("express").Router();
 
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
-
+  
   try {
     const { document, role } = await getDocument(id, req.user.id);
 
@@ -77,11 +77,11 @@ router.post("", async (req, res) => {
       data: {},
       name: "",
       ...body,
-      createdBy: userInfo._id,
+      createdBy: userInfo.id,
       createdAt: Date.now(),
       access: [
         {
-          user: userInfo._id,
+          user: userInfo.id,
           type: 4, // 4 means admin
         },
       ],
