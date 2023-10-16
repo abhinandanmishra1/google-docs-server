@@ -26,6 +26,7 @@ const setUpSocketServer = (app) => {
 
   io.on("connection", (socket) => {
     const { token } = socket.handshake.query;
+    let user = null;
     let user_id = null;
 
     socket.on("get-document", async (documentId) => {
@@ -34,7 +35,7 @@ const setUpSocketServer = (app) => {
 
       try {
         // const document = await createNewVersionDocument(documentId, user);  -> TODO: how to get user?
-        const user = await validateToken(token);
+        user = await validateToken(token);
         user_id = user.id;
 
         const { document, role } = await getDocument(documentId, user.id);
@@ -46,10 +47,15 @@ const setUpSocketServer = (app) => {
         mongoDocumentId = document?.id;  // id here means documentId
         socket.join(documentId);
         socket.emit("load-document", { document, role });
+        socket.broadcast.to(documentId).emit("load-user", user);
       } catch (err) {
         console.log(err);
       }
 
+      socket.on("update-me", () => {
+        socket.broadcast.to(documentId).emit("recieve-me", user);
+      })
+      
       socket.on("send-changes", (data) => {
         socket.broadcast.to(documentId).emit("recieve-changes", data);
       });
@@ -59,6 +65,10 @@ const setUpSocketServer = (app) => {
         // documentId is for docuemnt's id, _id is for the version of that document
         updateDocument(mongoDocumentId, data, user_id); // updating the version data
       });
+
+      socket.on("disconnect", () => {
+        socket.broadcast.to(documentId).emit("remove-me", user);
+      })
     });
   });
   const PORT = process.env.PORT || 5000;
