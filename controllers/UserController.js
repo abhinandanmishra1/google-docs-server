@@ -50,6 +50,32 @@ async function getUserById(id) {
   return user;
 }
 
+async function getUserByEmail(email) {
+  const result = await Users.aggregate([
+    {
+      $match: {
+        email,
+      },
+    },
+    {
+      $facet: {
+        user: [
+          {
+            $set: {
+              id: "$_id",
+            },
+          },
+          {
+            $unset: ["_id", "googleId", "refreshToken"],
+          },
+        ],
+      },
+    },
+  ]);
+
+  return result[0]["user"][0];
+}
+
 async function getUserByGoogleId(googleId) {
   const result = await Users.aggregate([
     {
@@ -82,4 +108,5 @@ module.exports = {
   getUserById,
   findOrCreateUser,
   getUserByGoogleId,
+  getUserByEmail,
 };

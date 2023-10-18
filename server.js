@@ -53,7 +53,7 @@ app.use(
       "https://abhidocs.vercel.app",
       "https://abhidocs.vercel.app/",
     ],
-    methods: "GET,POST,PUT,DELETE",
+    methods: "GET,POST,PUT,DELETE,PATCH",
     credentials: true,
   })
 );

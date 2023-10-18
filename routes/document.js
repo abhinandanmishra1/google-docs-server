@@ -1,8 +1,8 @@
-const { default: mongoose } = require("mongoose");
 const Document = require("../models/Document");
-const { default: axios } = require("axios");
-const { getDocument } = require("../controllers/DocumentController");
+const { getDocument, getDocumentUsers, updateUserRole } = require("../controllers/DocumentController");
 const { ObjectId } = require("../extras");
+const { getUserByEmail } = require("../controllers/UserController");
+const { PermissionsEnum } = require("../enums/PermissionEnum");
 
 const router = require("express").Router();
 
@@ -10,7 +10,7 @@ const router = require("express").Router();
 
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
-  
+
   try {
     const { document, role } = await getDocument(id, req.user.id);
 
@@ -82,7 +82,7 @@ router.post("", async (req, res) => {
       access: [
         {
           user: userInfo.id,
-          type: 4, // 4 means admin
+          type: PermissionsEnum.ALL
         },
       ],
     });
@@ -102,9 +102,12 @@ router.put("/:id", async (req, res) => {
   try {
     const documentId = new ObjectId(id);
 
-    const result = await Document.updateOne({
-      documentId,
-    }, { ...data, modifiedAt: Date.now() });
+    const result = await Document.updateOne(
+      {
+        documentId,
+      },
+      { ...data, modifiedAt: Date.now() }
+    );
 
     if (result.upsertedCount) {
       return res.status(500).send({ message: "Document not found" });
@@ -114,6 +117,40 @@ router.put("/:id", async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 });
+
+router.get("/:id/users", async (req, res) => {
+  const { id } = req.params;
+  const documentId = new ObjectId(id);
+
+  try {
+    const result = await getDocumentUsers(documentId);
+
+    res.status(200).send(result);
+  }catch(err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
+router.patch("/:id/users", async (req, res) => {
+  const { id } = req.params;
+  const { email, role} = req.body;
+  console.log(email, role);
+
+
+  try {
+    const user= await getUserByEmail(email);
+
+    if(!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    await updateUserRole(user.id, id, role);
+
+    res.status(200).send("User updated successfully");
+  }catch(err) {
+    res.status(500).send({ message: err.message });
+  }
+})
 
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
