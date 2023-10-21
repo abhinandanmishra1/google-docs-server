@@ -31,7 +31,7 @@ async function createNewVersionDocument(documentId, user) {
   return newDocument;
 }
 
-const getDocumentListing = async (userId, limit, offset) => {
+const getDocumentListing = async (documentIds, limit, offset) => {
   const result = await Document.aggregate([
     {
       $facet: {
@@ -39,7 +39,7 @@ const getDocumentListing = async (userId, limit, offset) => {
         data: [
           {
             $match: {
-              createdBy: userId,
+              documentId: { $in: documentIds },
             },
           },
           {
@@ -64,7 +64,6 @@ const getDocumentListing = async (userId, limit, offset) => {
     },
   ]);
 
-  
   return { data: result[0].data, total: result[0].total[0].totalCount };
 };
 

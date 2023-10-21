@@ -12,7 +12,9 @@ const getDocumentAccess = async (documentId, userId) => {
     {
       $facet: {
         public: [{ $match: { accessType: "PUBLIC" } }],
-        private: [{ $match: { accessType: "PRIVATE", userId: new ObjectId(userId) } }],
+        private: [
+          { $match: { accessType: "PRIVATE", userId: new ObjectId(userId) } },
+        ],
       },
     },
     {
@@ -20,13 +22,39 @@ const getDocumentAccess = async (documentId, userId) => {
     },
     {
       $unwind: "$private",
-    }
+    },
   ]);
 
-  const { public, private } = (result[0] || {});
+  const { public, private } = result[0] || {};
 
   const permission = (public?.permission || 0) | (private?.permission || 0);
   return getAccessRole(permission);
+};
+
+const getDocumentIdsWithAccessType = async (ownedBy, userId) => {
+  const matchObject = { accessType: "PRIVATE" };
+  if (ownedBy === "me") {
+    matchObject.modifiedBy = userId;
+  } else if (ownedBy === "others") {
+    matchObject.modifiedBy = { $ne: userId };
+    matchObject.userId = { $eq: userId };
+  } else {
+    matchObject.userId = { $eq: userId };
+  }
+
+  const result = await DocumentAccess.aggregate([
+    {
+      $match: matchObject,
+    },
+    {
+      $project: {
+        documentId: 1,
+        _id: 0,
+      },
+    },
+  ]);
+
+  return result.map((item) => item.documentId);
 };
 
 const setDocumentPrivateAccess = async (
@@ -81,7 +109,15 @@ const getDocumentUsers = async (documentId) => {
         public: [
           { $match: { accessType: "PUBLIC" } },
           {
-            $unset: ["_id", "__v", "modifiedAt", "modifiedBy", "accessType", "documentId", "userId"],
+            $unset: [
+              "_id",
+              "__v",
+              "modifiedAt",
+              "modifiedBy",
+              "accessType",
+              "documentId",
+              "userId",
+            ],
           },
         ],
         private: [
@@ -105,8 +141,16 @@ const getDocumentUsers = async (documentId) => {
             },
           },
           {
-            $unset: ["_id", "__v","modifiedAt", "modifiedBy", "accessType", "documentId", "user"],
-          }
+            $unset: [
+              "_id",
+              "__v",
+              "modifiedAt",
+              "modifiedBy",
+              "accessType",
+              "documentId",
+              "user",
+            ],
+          },
         ],
       },
     },
@@ -130,4 +174,5 @@ module.exports = {
   setDocumentPublicAccess,
   deleteDocumentAccess,
   getDocumentUsers,
+  getDocumentIdsWithAccessType,
 };

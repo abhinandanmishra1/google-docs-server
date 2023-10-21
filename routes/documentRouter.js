@@ -1,18 +1,16 @@
 const Document = require("../models/Document");
 const {
   getDocument,
-  getDocumentUsers,
-  updateUserRole,
   getDocumentListing,
   createDocument,
 } = require("../controllers/DocumentController");
 const { ObjectId } = require("../extras");
-const { getUserByEmail } = require("../controllers/UserController");
 const { PermissionsEnum } = require("../enums/PermissionEnum");
 const {
   setDocumentPrivateAccess,
   setDocumentPublicAccess,
   getDocumentAccess,
+  getDocumentIdsWithAccessType,
 } = require("../controllers/DocumentAccessControler");
 
 const router = require("express").Router();
@@ -24,9 +22,11 @@ router.get("/:id", async (req, res) => {
 
   try {
     const role = await getDocumentAccess(id, req.user.id);
-    
-    if(role === "none") {
-      return res.status(401).send({ message: "You don't have access to this document" });
+
+    if (role === "none") {
+      return res
+        .status(401)
+        .send({ message: "You don't have access to this document" });
     }
 
     const document = await getDocument(id);
@@ -41,12 +41,20 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+/*
+  Get document listing
+  ownedBy: "me" | "any" | "others"
+*/
 router.get("", async (req, res) => {
-  const { limit = 10, offset = 0 } = req.body;
+  const { limit = 10, offset = 0, ownedBy = "me" } = req.query;
+  console.log(ownedBy);
+
   const { user: userInfo } = req;
 
+  const documentIds = await getDocumentIdsWithAccessType(ownedBy, userInfo.id);
+
   try {
-    const result = await getDocumentListing(userInfo.id, limit, offset);
+    const result = await getDocumentListing(documentIds, limit, offset);
 
     res.status(201).send(result);
   } catch (err) {
