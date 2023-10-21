@@ -1,6 +1,7 @@
 const {
   getDocumentUsers,
   setDocumentPrivateAccess,
+  getDocumentAccess,
 } = require("../controllers/DocumentAccessControler");
 const { getUserByEmail } = require("../controllers/UserController");
 const { PermissionsEnum } = require("../enums/PermissionEnum");
@@ -46,6 +47,24 @@ router.patch("/:id/users", async (req, res) => {
     await setDocumentPrivateAccess(documentId, userId, PermissionsEnum[role]);
 
     res.status(200).send("User updated successfully");
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
+router.get("/:id/role", async (req, res) => {
+  const { id } = req.params;
+  const { user } = req.query;
+
+  if (!id || !user) return res.status(400).send({ message: "Missing fields" });
+
+  try {
+    const documentId = new ObjectId(id);
+    const userId = new ObjectId(user);
+
+    const role = await getDocumentAccess(documentId, userId);
+
+    res.status(200).send({ role });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
