@@ -47,7 +47,6 @@ router.get("/:id", async (req, res) => {
 */
 router.get("", async (req, res) => {
   const { limit = 10, offset = 0, ownedBy = "me" } = req.query;
-  console.log(ownedBy);
 
   const { user: userInfo } = req;
 

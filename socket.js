@@ -72,6 +72,12 @@ const setUpSocketServer = (app) => {
         updateDocument(mongoDocumentId, data, user_id); // updating the version data
       });
 
+      socket.on("name-update", (name) => {
+        const data = { name };
+        updateDocument(mongoDocumentId, data, user_id);
+        socket.broadcast.to(documentId).emit("recieve-name", name);
+      });
+
       socket.on("disconnect-event", () => {
         socket.broadcast.to(documentId).emit("remove-me", user);
       });
