@@ -15,6 +15,7 @@ router.post("", async (req, res) => {
   try {
     const userInfo = jwt.decode(req.body.idToken);
 
+    console.log(userInfo);
     const createUserObject = {
       googleId: userInfo.sub,
       refreshToken: req.body.refreshToken,

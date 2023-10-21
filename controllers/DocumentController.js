@@ -1,6 +1,4 @@
-const { default: mongoose } = require("mongoose");
 const Document = require("../models/Document");
-const { getAccessRole, PermissionsEnum } = require("../enums/PermissionEnum");
 const { ObjectId } = require("../extras");
 
 async function createNewVersionDocument(documentId, user) {
@@ -33,10 +31,46 @@ async function createNewVersionDocument(documentId, user) {
   return newDocument;
 }
 
-const getDocument = async (id, user_id) => {
+const getDocumentListing = async (userId, limit, offset) => {
+  const result = await Document.aggregate([
+    {
+      $facet: {
+        total: [{ $count: "totalCount" }],
+        data: [
+          {
+            $match: {
+              createdBy: userId,
+            },
+          },
+          {
+            $skip: offset,
+          },
+          {
+            $limit: limit,
+          },
+          {
+            $sort: { createdAt: 1 },
+          },
+          {
+            $set: {
+              id: "$documentId",
+            },
+          },
+          {
+            $unset: ["_id", "documentId", "data", "__v"],
+          },
+        ],
+      },
+    },
+  ]);
+
+  
+  return { data: result[0].data, total: result[0].total[0].totalCount };
+};
+
+const getDocument = async (id) => {
   // we have to check what access does this user have for this document
-  const documentId = new mongoose.Types.ObjectId(id);
-  const userId = new mongoose.Types.ObjectId(user_id);
+  const documentId = new ObjectId(id);
 
   const result = await Document.aggregate([
     {
@@ -46,41 +80,33 @@ const getDocument = async (id, user_id) => {
     },
     {
       $facet: {
-        permissions: [
-          {
-            $match: {
-              "access.user": userId,
-            },
-          },
-          {
-            $project: { _id: 0, "access.type": 1 },
-          },
-          { $unwind: "$access" },
-        ],
         data: [
           { $set: { id: "$documentId", versionId: "$_id" } },
-          { $unset: ["_id", "documentId", "access"] },
+          { $unset: ["_id", "documentId", "access", "__v"] },
         ],
       },
     },
-    { $unwind: { path: "$permissions", preserveNullAndEmptyArrays: true } },
     { $unwind: { path: "$data" } },
-    {
-      $project: {
-        permissions: "$permissions.access.type",
-        data: 1,
-      },
-    },
   ]);
 
   const document = result[0]?.data;
-  const permission = result[0]?.permissions | document?.sharedWithEveryone;
 
-  const role = getAccessRole(permission);
-  return {
-    document,
-    role,
-  };
+  return document;
+};
+
+const createDocument = async (data, userId) => {
+  const documentId = new ObjectId();
+
+  const result = await Document.create({
+    documentId,
+    data: {},
+    name: "",
+    ...data,
+    createdBy: userId,
+    createdAt: Date.now(),
+  });
+
+  return documentId;
 };
 
 async function updateDocument(documentId, data, user_id) {
@@ -92,97 +118,6 @@ async function updateDocument(documentId, data, user_id) {
   );
 }
 
-async function getDocumentUsers(documentId) {
-  const result = await Document.aggregate([
-    {
-      $match: {
-        documentId,
-      },
-    },
-    {
-      $facet: {
-        data: [
-          {
-            $set: {
-              id: "$documentId",
-            },
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "access.user",
-              foreignField: "_id",
-              as: "users",
-            },
-          },
-          {
-            $unset: [
-              "name",
-              "documentId",
-              "_id",
-              "__v",
-              "createdAt",
-              "createdBy",
-              "data",
-              "modifiedAt",
-              "modifiedBy",
-              // "access",
-              // "users._id",
-              "users.googleId",
-              "users.refreshToken",
-              "users.__v",
-            ],
-          },
-        ],
-        data2: [
-          {
-            $set: {
-              id: "$documentId",
-            },
-          },
-          {
-            $unset: [
-              "name",
-              "documentId",
-              "_id",
-              "__v",
-              "createdAt",
-              "createdBy",
-              "data",
-              "modifiedAt",
-              "modifiedBy",
-              // "access",
-              // "users._id",
-              "users.googleId",
-              "users.refreshToken",
-              "users.__v",
-            ],
-          },
-        ],
-      },
-    },
-  ]);
-
-  
-  const { users, access, sharedWithEveryone, id } = result[0]?.data[0] || {};
-
-  const userIdToRoleMapping = (access || [])?.reduce((acc, curr) => {
-    acc[curr.user] = getAccessRole(curr.type);  
-    return acc;
-  }, {});
-
-  const usersWithRole = (users || []).map((user) => ({
-    ...user,
-    role: userIdToRoleMapping[user._id],
-  }));
-
-  return {
-    users: usersWithRole,
-    id,
-    sharedWithEveryone,
-  };
-}
-
 /*
   Update user role
   userId - id of user
@@ -190,17 +125,10 @@ async function getDocumentUsers(documentId) {
   role: VIEW | EDIT | ADMIN
 */
 
-const updateUserRole = async (userId, documentId, role) => {
-  await Document.updateOne(
-    { documentId: new ObjectId(documentId) },
-    { $addToSet: { access: { user: userId, type: PermissionsEnum[role] } } }
-  );
-};
-
 module.exports = {
   createNewVersionDocument,
+  createDocument,
   updateDocument,
   getDocument,
-  getDocumentUsers,
-  updateUserRole,
+  getDocumentListing,
 };

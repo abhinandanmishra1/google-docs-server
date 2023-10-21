@@ -8,9 +8,10 @@ const setUpSocketServer = require("./socket");
 const passport = require("passport");
 const passportSetup = require("./passport");
 
-const authRoute = require("./routes/auth");
-const documentRoute = require("./routes/document");
-const userRoute = require("./routes/user");
+const authRouter = require("./routes/authRouter");
+const documentRouter = require("./routes/documentRouter");
+const userRouter = require("./routes/userRouter");
+const documentAccessRouter = require("./routes/documentAccessRouter");
 
 const bodyParser = require("body-parser");
 
@@ -86,6 +87,7 @@ app.post("/register", (req, res) => {
   res.send("Hello World!");
 });
 
-app.use("/auth", authRoute);
-app.use("/documents", authenticate, documentRoute);
-app.use("/users", authenticate, userRoute);
+app.use("/auth", authRouter);
+app.use("/documents", authenticate, documentRouter);
+app.use("/users", userRouter);
+app.use("/access", authenticate, documentAccessRouter);

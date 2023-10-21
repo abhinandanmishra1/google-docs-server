@@ -23,8 +23,6 @@ const DocumentSchema = new Schema({
   createdBy: Schema.Types.ObjectId, // storing on basis of google.user.id
   modifiedAt: { type: Date, default: Date.now() },
   modifiedBy: Schema.Types.ObjectId,
-  sharedWithEveryone: { type: Number, default: 0 },
-  access: [UserAccessSchema],
 });
 
 const Document = model("Document", DocumentSchema);

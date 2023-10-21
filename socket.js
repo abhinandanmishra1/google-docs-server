@@ -8,7 +8,7 @@ const {
   getDocument,
 } = require("./controllers/DocumentController");
 const validateToken = require("./helpers/validateToken");
-const { getAccessRole } = require("./enums/PermissionEnum");
+const { getDocumentAccess } = require("./controllers/DocumentAccessControler");
 
 const setUpSocketServer = (app) => {
   const server = http.createServer(app);
@@ -38,13 +38,19 @@ const setUpSocketServer = (app) => {
         user = await validateToken(token);
         user_id = user.id;
 
-        const { document, role } = await getDocument(documentId, user.id);
+        const role = await getDocumentAccess(documentId, user.id);
+
+        if (role === "none") {
+          throw new Error("You don't have access to this document");
+        }
+
+        const document = await getDocument(documentId, user.id);
 
         if (document == null) {
           throw new Error("Document not found");
         }
 
-        mongoDocumentId = document?.id;  // id here means documentId
+        mongoDocumentId = document?.id; // id here means documentId
         socket.join(documentId);
         socket.emit("load-document", { document, role });
         socket.broadcast.to(documentId).emit("load-user", user);
@@ -54,21 +60,21 @@ const setUpSocketServer = (app) => {
 
       socket.on("update-me", () => {
         socket.broadcast.to(documentId).emit("recieve-me", user);
-      })
-      
+      });
+
       socket.on("send-changes", (data) => {
         socket.broadcast.to(documentId).emit("recieve-changes", data);
       });
 
       socket.on("save-document", (data) => {
-        // documentId = mongoDocumentId;  
+        // documentId = mongoDocumentId;
         // documentId is for docuemnt's id, _id is for the version of that document
         updateDocument(mongoDocumentId, data, user_id); // updating the version data
       });
 
       socket.on("disconnect-event", () => {
         socket.broadcast.to(documentId).emit("remove-me", user);
-      })
+      });
     });
   });
   const PORT = process.env.PORT || 5000;

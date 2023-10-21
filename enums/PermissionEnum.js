@@ -9,6 +9,7 @@ const getAccessRole = (permission) => {
   if (permission & PermissionsEnum.ALL) {
     return "owner";
   }
+
   if (permission & PermissionsEnum.ADMIN) {
     return "admin";
   } 
@@ -16,7 +17,11 @@ const getAccessRole = (permission) => {
     return "editor";
   }
 
-  return "viewer";
+  if (permission & PermissionsEnum.VIEW) {
+    return "viewer";
+  }
+
+  return "none";
 };
 
 module.exports = {
