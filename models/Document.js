@@ -19,6 +19,7 @@ const DocumentSchema = new Schema({
   documentId: Schema.Types.ObjectId, // real documentId
   data: Object,
   name: String,
+  versionName: String,
   createdAt: { type: Date, default: Date.now() },
   createdBy: Schema.Types.ObjectId, // storing on basis of google.user.id
   modifiedAt: { type: Date, default: Date.now() },

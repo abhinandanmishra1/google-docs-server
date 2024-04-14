@@ -4,7 +4,7 @@ const {
   getDocumentVersions,
   getDocumentListing,
   createDocument,
-  deleteDocument
+  deleteDocument,
 } = require("../controllers/DocumentController");
 const { ObjectId } = require("../extras");
 const { PermissionsEnum } = require("../enums/PermissionEnum");
@@ -46,6 +46,8 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/versions", async (req, res) => {
   const { id } = req.params;
 
+  const { type } = req.query;
+  console.log(type)
   try {
     const role = await getDocumentAccess(id, req.user.id);
 
@@ -55,7 +57,7 @@ router.get("/:id/versions", async (req, res) => {
         .send({ message: "You don't have access to this document" });
     }
 
-    const versions = await getDocumentVersions(id);
+    const versions = await getDocumentVersions(id, type);
 
     if (versions != null) {
       res.status(200).send({ versions, role });

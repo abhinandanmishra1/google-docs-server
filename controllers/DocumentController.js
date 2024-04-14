@@ -11,7 +11,9 @@ const createDocument = async (data, userId) => {
     name: "",
     ...data,
     createdBy: userId,
+    modifiedBy: userId,
     createdAt: Date.now(),
+    modifiedAt: Date.now(),
   });
 
   return documentId;
@@ -139,28 +141,60 @@ const getDocument = async (id) => {
 // #endregion
 
 //#region getDocumentVersions
-const getDocumentVersions = async (id) => {
+const getDocumentVersions = async (id, type = "all") => {
   const documentId = new ObjectId(id);
+  const matchObj = {
+    documentId,
+  }
+
+  if (type !== "all") {
+    matchObj.versionName = { $ne: null };
+  }
+  
   const result = await Document.aggregate([
     {
-      $match: {
-        documentId,
-      },
+      $match: matchObj,
     },
     {
       $sort: {
-        documentId: 1,
-        _id: -1,
+        _id: -1, // Sort by _id only because documentId is same for all versions
       },
     },
-    { $set: { id: "$documentId", versionId: "$_id" } },
-    { $unset: ["_id", "documentId", "access", "__v", "createdAt"] },
+    {
+      $lookup: {
+        from: "users",
+        localField: "modifiedBy",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    {
+      $set: {
+        id: "$documentId",
+        versionId: "$_id",
+        modifiedBy: { $arrayElemAt: ["$user", 0] }, // Get the first element of the array
+      },
+    },
+    {
+      $unset: ["_id", "documentId", "access", "__v", "createdAt", "user"],
+    },
+    {
+      $project: {
+        id: 1,
+        versionId: 1,
+        modifiedBy: { name: 1, id: "$modifiedBy._id" }, // Reshape the modifiedBy field
+        data: 1,
+        name: 1,
+        modifiedAt: 1,
+        versionName: 1
+      },
+    },
   ]);
 
   return result;
 };
-// #endregion
 
+// #endregion
 
 //#region updateDocument
 async function updateDocument(
@@ -195,10 +229,10 @@ async function updateDocument(
 const deleteDocument = async (id) => {
   const documentId = new ObjectId(id);
   const result = await Document.deleteMany({ documentId });
-  await DocumentAccess.deleteMany({documentId});
+  await DocumentAccess.deleteMany({ documentId });
 
-  return result.deletedCount>0;
-}
+  return result.deletedCount > 0;
+};
 //#endregion
 
 module.exports = {
