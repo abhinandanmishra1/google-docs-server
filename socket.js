@@ -4,7 +4,6 @@ require("dotenv").config();
 
 const {
   updateDocument,
-  createNewVersionDocument,
   getDocument,
 } = require("./controllers/DocumentController");
 const validateToken = require("./helpers/validateToken");
@@ -32,9 +31,11 @@ const setUpSocketServer = (app) => {
     socket.on("get-document", async (documentId) => {
       if (!documentId) return;
       let mongoDocumentId = null;
+      let modifiedAt = -1;
+      let versionId = null;
+      let name = "";
 
       try {
-        // const document = await createNewVersionDocument(documentId, user);  -> TODO: how to get user?
         user = await validateToken(token);
         user_id = user.id;
 
@@ -49,8 +50,11 @@ const setUpSocketServer = (app) => {
         if (document == null) {
           throw new Error("Document not found");
         }
-
+        
+        modifiedAt = document?.modifiedAt;
         mongoDocumentId = document?.id; // id here means documentId
+        versionId = document?.versionId;
+        name = document?.name;
         socket.join(documentId);
         socket.emit("load-document", { document, role });
         socket.broadcast.to(documentId).emit("load-user", user);
@@ -66,16 +70,23 @@ const setUpSocketServer = (app) => {
         socket.broadcast.to(documentId).emit("recieve-changes", data);
       });
 
-      socket.on("save-document", (data) => {
+      socket.on("save-document", async (data) => {
         // documentId = mongoDocumentId;
         // documentId is for docuemnt's id, _id is for the version of that document
-        updateDocument(mongoDocumentId, data, user_id); // updating the version data
+        data.name = name;
+        const document = await updateDocument(mongoDocumentId, versionId, data, user_id, modifiedAt);
+        if(document) {
+          // that means new version is created
+          modifiedAt = document.modifiedAt;
+          versionId = document._id;
+        }
       });
 
-      socket.on("name-update", (name) => {
-        const data = { name };
-        updateDocument(mongoDocumentId, data, user_id);
-        socket.broadcast.to(documentId).emit("recieve-name", name);
+      socket.on("name-update", async (updatedName) => {
+        const data = { name: updatedName };
+        name = updatedName;
+        await updateDocument(mongoDocumentId, versionId, data, user_id);
+        socket.broadcast.to(documentId).emit("recieve-name", updatedName);
       });
 
       socket.on("disconnect-event", () => {

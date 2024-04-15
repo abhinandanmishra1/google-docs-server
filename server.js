@@ -10,6 +10,7 @@ const passportSetup = require("./passport");
 
 const authRouter = require("./routes/authRouter");
 const documentRouter = require("./routes/documentRouter");
+const documentVersionRouter = require("./routes/documentVersionRouter");
 const userRouter = require("./routes/userRouter");
 const documentAccessRouter = require("./routes/documentAccessRouter");
 
@@ -89,5 +90,6 @@ app.post("/register", (req, res) => {
 
 app.use("/auth", authRouter);
 app.use("/documents", authenticate, documentRouter);
+app.use("/versions", authenticate, documentVersionRouter);
 app.use("/users", userRouter);
 app.use("/access", authenticate, documentAccessRouter);

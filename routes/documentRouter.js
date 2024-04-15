@@ -1,8 +1,10 @@
 const Document = require("../models/Document");
 const {
   getDocument,
+  getDocumentVersions,
   getDocumentListing,
   createDocument,
+  deleteDocument,
 } = require("../controllers/DocumentController");
 const { ObjectId } = require("../extras");
 const { PermissionsEnum } = require("../enums/PermissionEnum");
@@ -33,6 +35,31 @@ router.get("/:id", async (req, res) => {
 
     if (document != null) {
       res.status(200).send({ document, role });
+    } else {
+      res.status(404).send({ error: "Document not found" });
+    }
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
+router.get("/:id/versions", async (req, res) => {
+  const { id } = req.params;
+  const { type } = req.query;
+
+  try {
+    const role = await getDocumentAccess(id, req.user.id);
+
+    if (role === "none") {
+      return res
+        .status(401)
+        .send({ message: "You don't have access to this document" });
+    }
+
+    const versions = await getDocumentVersions(id, type);
+
+    if (versions != null) {
+      res.status(200).send({ versions, role });
     } else {
       res.status(404).send({ error: "Document not found" });
     }
@@ -110,12 +137,11 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
-  const documentId = new ObjectId(id);
 
   try {
-    const result = await Document.deleteOne({ documentId });
+    const result = await deleteDocument(id);
 
-    if (result.deletedCount === 0) {
+    if (!result) {
       return res.status(400).send({ message: "Document not found" });
     }
 
