@@ -8,7 +8,6 @@ const renameDocumentVersion = async (versionId, versionName) => {
 };
 //#endregion
 
-
 module.exports = {
-  renameDocumentVersion
-}
+  renameDocumentVersion,
+};

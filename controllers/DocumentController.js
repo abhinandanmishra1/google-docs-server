@@ -206,13 +206,13 @@ async function updateDocument(
 ) {
   if (!documentId) return;
   if (modifiedAt) {
-    // if time of updation has difference of more than 5 mins
+    // if time of updation has difference of more than 1 min
     // then create a new document version
     const currentTime = Date.now();
     const diff = currentTime - new Date(modifiedAt).getTime();
-    const FIVE_MINS = 5 * 60 * 60 * 60;
+    const LIMIT = 1 * 60 * 60 * 60;
 
-    if (diff > FIVE_MINS) {
+    if (diff > LIMIT) {
       return createNewVersionDocument(documentId, data, user_id);
     }
   }
