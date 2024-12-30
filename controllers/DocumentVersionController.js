@@ -1,6 +1,5 @@
-const Document = require("../models/Document");
-const { ObjectId } = require("../extras");
-
+import { Document } from "../models/index.js";
+import { ObjectId } from "../extras/index.js";
 //#region renameDocumentVersion
 const renameDocumentVersion = async (versionId, versionName) => {
   const _id = new ObjectId(versionId);
@@ -8,6 +7,4 @@ const renameDocumentVersion = async (versionId, versionName) => {
 };
 //#endregion
 
-module.exports = {
-  renameDocumentVersion,
-};
+export { renameDocumentVersion };

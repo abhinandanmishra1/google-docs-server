@@ -1,13 +1,14 @@
-const { Server } = require("socket.io");
-const http = require("http");
-require("dotenv").config();
+import { DocumentAccessController } from "./controllers/index.js";
+import {
+  DocumentController,
+} from "./controllers/index.js";
+import { Server } from "socket.io";
+import dotenv from "dotenv";
+import http from "http";
+import { validateToken } from "./helpers/validateToken.js";
 
-const {
-  updateDocument,
-  getDocument,
-} = require("./controllers/DocumentController");
-const validateToken = require("./helpers/validateToken");
-const { getDocumentAccess } = require("./controllers/DocumentAccessControler");
+dotenv.config();
+
 
 const setUpSocketServer = (app) => {
   const server = http.createServer(app);
@@ -39,13 +40,13 @@ const setUpSocketServer = (app) => {
         user = await validateToken(token);
         user_id = user.id;
 
-        const role = await getDocumentAccess(documentId, user.id);
+        const role = await DocumentAccessController.getDocumentAccess(documentId, user.id);
 
         if (role === "none") {
           throw new Error("You don't have access to this document");
         }
 
-        const document = await getDocument(documentId, user.id);
+        const document = await DocumentController.getDocument(documentId, user.id);
 
         if (document == null) {
           throw new Error("Document not found");
@@ -74,7 +75,7 @@ const setUpSocketServer = (app) => {
         // documentId = mongoDocumentId;
         // documentId is for docuemnt's id, _id is for the version of that document
         data.name = name;
-        const document = await updateDocument(mongoDocumentId, versionId, data, user_id, modifiedAt);
+        const document = await DocumentController.updateDocument(mongoDocumentId, versionId, data, user_id, modifiedAt);
         if(document) {
           // that means new version is created
           modifiedAt = document.modifiedAt;
@@ -85,7 +86,7 @@ const setUpSocketServer = (app) => {
       socket.on("name-update", async (updatedName) => {
         const data = { name: updatedName };
         name = updatedName;
-        await updateDocument(mongoDocumentId, versionId, data, user_id);
+        await DocumentController.updateDocument(mongoDocumentId, versionId, data, user_id);
         socket.broadcast.to(documentId).emit("recieve-name", updatedName);
       });
 
@@ -94,11 +95,11 @@ const setUpSocketServer = (app) => {
       });
     });
   });
-  const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5001;
 
   server.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
   });
 };
 
-module.exports = setUpSocketServer;
+export { setUpSocketServer };

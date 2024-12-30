@@ -1,10 +1,8 @@
-const jwt = require("jsonwebtoken");
-const {
-  findOrCreateUser,
-  updateUser,
-  getUserById,
-} = require("../controllers/UserController");
-const router = require("express").Router();
+import { Router } from "express";
+import { UserController } from "../controllers/index.js";
+import jwt from "jsonwebtoken";
+
+const router = Router();
 
 router.post("", async (req, res) => {
   // todo: add authentication here only authenticated can create user
@@ -23,8 +21,7 @@ router.post("", async (req, res) => {
       picture: userInfo.picture,
     };
 
-    const user = await findOrCreateUser(createUserObject);
-
+    const user = await UserController.findOrCreateUser(createUserObject);
     if (!user) {
       return res
         .status(500)
@@ -35,7 +32,7 @@ router.post("", async (req, res) => {
       user,
     });
   } catch (err) {
-    res.status(500).send({ msg: "Internal Server Error" });
+    res.status(500).send({ msg: err.message || "Internal Server Error" });
   }
 });
 
@@ -49,17 +46,17 @@ router.patch("/:id", async (req, res) => {
     refreshToken: req.body.refreshToken,
   };
 
-  const user = await getUserById(id);
+  const user = await UserController.getUserById(id);
 
   if (!user) {
     return res.status(404).send({ msg: "User not found" });
   }
 
-  const updatedUser = await updateUser(id, updateObject);
+  const updatedUser = await UserController.updateUser(id, updateObject);
 
   res.status(201).send({
     user: updatedUser,
   });
 });
 
-module.exports = router;
+export default router;

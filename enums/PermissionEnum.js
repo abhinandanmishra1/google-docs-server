@@ -24,7 +24,4 @@ const getAccessRole = (permission) => {
   return "none";
 };
 
-module.exports = {
-  PermissionsEnum,
-  getAccessRole,
-};
+export { PermissionsEnum, getAccessRole };

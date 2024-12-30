@@ -1,5 +1,5 @@
-const ObjectId = require("mongoose").Types.ObjectId;
+import mongoose from "mongoose";
 
-module.exports = {
-  ObjectId,
-};
+const { ObjectId } = mongoose.Types;
+
+export { ObjectId };

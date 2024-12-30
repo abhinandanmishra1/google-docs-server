@@ -1,9 +1,12 @@
-const router = require("express").Router();
-const passport = require("passport");
-require("dotenv").config();
-const { OAuth2Client, UserRefreshClient } = require("google-auth-library");
-const { default: axios } = require("axios");
-const { getUserByGoogleId } = require("../controllers/UserController");
+import { OAuth2Client, UserRefreshClient } from "google-auth-library";
+
+import { Router } from "express";
+import { UserController } from "../controllers/index.js";
+import axios from "axios";
+import dotenv from "dotenv";
+import passport from "passport";
+
+dotenv.config();
 
 const oAuth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -12,6 +15,8 @@ const oAuth2Client = new OAuth2Client(
 );
 
 const CLIENT_URL = process.env.CLIENT_URL;
+
+const router = Router()
 
 router.get("/login/success", async (req, res) => {
   const token = req.headers.authorization?.split(" ")?.[1];
@@ -26,7 +31,7 @@ router.get("/login/success", async (req, res) => {
       }
     );
 
-    const user = await getUserByGoogleId(userInfo.user_id);
+    const user = await UserController.getUserByGoogleId(userInfo.user_id);
 
     res.status(200).json({
       success: true,
@@ -85,4 +90,4 @@ router.get(
   })
 );
 
-module.exports = router;
+export default router;

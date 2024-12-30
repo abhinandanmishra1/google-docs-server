@@ -1,13 +1,13 @@
-const Users = require("../models/User");
+import { User } from "../models/index.js";
 
 async function createUser(data) {
-  const user = await Users.create(data);
+  const user = await User.create(data);
 
   return user;
 }
 
 async function findOrCreateUser(data) {
-  const result = await Users.aggregate([
+  const result = await User.aggregate([
     {
       $match: {
         googleId: data.googleId,
@@ -39,19 +39,19 @@ async function findOrCreateUser(data) {
 }
 
 async function updateUser(matchObject, updateData) {
-  const user = await Users.updateOne(matchObject, updateData);
+  const user = await User.updateOne(matchObject, updateData);
 
   return user;
 }
 
 async function getUserById(id) {
-  const user = await Users.findById(id);
+  const user = await User.findById(id);
 
   return user;
 }
 
 async function getUserByEmail(email) {
-  const result = await Users.aggregate([
+  const result = await User.aggregate([
     {
       $match: {
         email,
@@ -77,7 +77,7 @@ async function getUserByEmail(email) {
 }
 
 async function getUserByGoogleId(googleId) {
-  const result = await Users.aggregate([
+  const result = await User.aggregate([
     {
       $match: {
         googleId,
@@ -102,7 +102,7 @@ async function getUserByGoogleId(googleId) {
   return result[0]["user"][0];
 }
 
-module.exports = {
+export {
   createUser,
   updateUser,
   getUserById,
