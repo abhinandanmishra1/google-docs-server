@@ -1,24 +1,24 @@
-const express = require("express");
-require("dotenv").config();
-const mongoose = require("mongoose");
-const cookieSession = require("cookie-session");
+import {
+  authRouter,
+  documentAccessRouter,
+  documentRouter,
+  documentVersionRouter,
+  userRouter,
+} from "../../routes/index.js";
 
-const setUpSocketServer = require("./socket");
+import { authenticate } from "../../middleware/auth_middleware.js";
+import bodyParser from "body-parser";
+import cookieSession from "cookie-session";
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
+import mongoose from "mongoose";
+import passport from "passport";
+import serverless from "serverless-http";
+import { setUpSocketServer } from "../../socket.js";
 
-const passport = require("passport");
-
-const authRouter = require("./routes/authRouter");
-const documentRouter = require("./routes/documentRouter");
-const documentVersionRouter = require("./routes/documentVersionRouter");
-const userRouter = require("./routes/userRouter");
-const documentAccessRouter = require("./routes/documentAccessRouter");
-
-const bodyParser = require("body-parser");
-
-const cors = require("cors");
-
+dotenv.config();
 const app = express();
-const { authenticate } = require("./middleware/auth_middleware");
 
 app.use(
   cookieSession({
@@ -63,8 +63,6 @@ app.use(
   cookieSession({ name: "session", keys: ["abhi"], maxAge: 24 * 60 * 60 * 100 })
 );
 
-require("dotenv").config();
-
 mongoose.connect(process.env.MONGO_CONNECT_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -80,7 +78,9 @@ db.once("open", function () {
 setUpSocketServer(app);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send({
+    message: "Server is healthy"
+  });
 });
 
 app.post("/register", (req, res) => {
@@ -92,3 +92,5 @@ app.use("/documents", authenticate, documentRouter);
 app.use("/versions", authenticate, documentVersionRouter);
 app.use("/users", userRouter);
 app.use("/access", authenticate, documentAccessRouter);
+
+export const handler = serverless(app);

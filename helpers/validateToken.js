@@ -1,5 +1,5 @@
-const { default: axios } = require("axios");
-const { getUserByGoogleId } = require("../controllers/UserController");
+import { UserController } from "../controllers/index.js";
+import axios from "axios";
 
 async function validateToken(token) {
   return new Promise(async (resolve, reject) => {
@@ -21,7 +21,7 @@ async function validateToken(token) {
         reject("Unauthroized Access");
       }
 
-      const user = await getUserByGoogleId(userInfo.user_id);
+      const user = await UserController.getUserByGoogleId(userInfo.user_id);
 
       if (user == null || user == undefined) {
         reject("Bad access token");
@@ -34,4 +34,4 @@ async function validateToken(token) {
   });
 }
 
-module.exports = validateToken;
+export { validateToken };

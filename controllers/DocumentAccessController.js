@@ -1,6 +1,6 @@
-const DocumentAccess = require("../models/DocumentAccess");
-const { getAccessRole, PermissionsEnum } = require("../enums/PermissionEnum");
-const { ObjectId } = require("../extras");
+import { DocumentAccess } from "../models/index.js";
+import { ObjectId } from "../extras/index.js";
+import { getAccessRole } from "../enums/PermissionEnum.js";
 
 const getDocumentAccess = async (documentId, userId) => {
   const result = await DocumentAccess.aggregate([
@@ -25,9 +25,9 @@ const getDocumentAccess = async (documentId, userId) => {
     },
   ]);
 
-  const { public, private } = result[0] || {};
+  const { public: publicAccess, private: privateAccess } = result[0] || {};
 
-  const permission = (public?.permission || 0) | (private?.permission || 0);
+  const permission = (publicAccess?.permission || 0) | (privateAccess?.permission || 0);
   return getAccessRole(permission);
 };
 
@@ -168,7 +168,7 @@ const deleteDocumentAccess = async (documentId, userId) => {
   });
 };
 
-module.exports = {
+export {
   getDocumentAccess,
   setDocumentPrivateAccess,
   setDocumentPublicAccess,

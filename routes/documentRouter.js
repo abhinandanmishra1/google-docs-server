@@ -1,21 +1,14 @@
-const Document = require("../models/Document");
-const {
-  getDocument,
-  getDocumentVersions,
-  getDocumentListing,
-  createDocument,
-  deleteDocument,
-} = require("../controllers/DocumentController");
-const { ObjectId } = require("../extras");
-const { PermissionsEnum } = require("../enums/PermissionEnum");
-const {
-  setDocumentPrivateAccess,
-  setDocumentPublicAccess,
-  getDocumentAccess,
-  getDocumentIdsWithAccessType,
-} = require("../controllers/DocumentAccessControler");
+import {
+  DocumentAccessController,
+  DocumentController,
+} from "../controllers/index.js";
 
-const router = require("express").Router();
+import { Document } from "../models/index.js";
+import { ObjectId } from "../extras/index.js";
+import { PermissionsEnum } from "../enums/PermissionEnum.js";
+import { Router } from "express";
+
+const router = Router();
 
 // baseurl = "/documents"
 
@@ -23,7 +16,10 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const role = await getDocumentAccess(id, req.user.id);
+    const role = await DocumentAccessController.getDocumentAccess(
+      id,
+      req.user.id
+    );
 
     if (role === "none") {
       return res
@@ -31,7 +27,7 @@ router.get("/:id", async (req, res) => {
         .send({ message: "You don't have access to this document" });
     }
 
-    const document = await getDocument(id);
+    const document = await DocumentController.getDocument(id);
 
     if (document != null) {
       res.status(200).send({ document, role });
@@ -48,7 +44,10 @@ router.get("/:id/versions", async (req, res) => {
   const { type } = req.query;
 
   try {
-    const role = await getDocumentAccess(id, req.user.id);
+    const role = await DocumentAccessController.getDocumentAccess(
+      id,
+      req.user.id
+    );
 
     if (role === "none") {
       return res
@@ -56,7 +55,10 @@ router.get("/:id/versions", async (req, res) => {
         .send({ message: "You don't have access to this document" });
     }
 
-    const versions = await getDocumentVersions(id, type);
+    const versions = await DocumentVersionController.getDocumentVersions(
+      id,
+      type
+    );
 
     if (versions != null) {
       res.status(200).send({ versions, role });
@@ -151,4 +153,4 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

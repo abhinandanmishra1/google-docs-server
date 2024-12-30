@@ -1,13 +1,12 @@
-const {
-  getDocumentUsers,
-  setDocumentPrivateAccess,
-  getDocumentAccess,
-} = require("../controllers/DocumentAccessControler");
-const { getUserByEmail } = require("../controllers/UserController");
-const { PermissionsEnum } = require("../enums/PermissionEnum");
-const { ObjectId } = require("../extras");
+import {
+  DocumentAccessController,
+  UserController,
+} from "../controllers/index.js";
 
-const router = require("express").Router();
+import { PermissionsEnum } from "../enums/PermissionEnum.js";
+import { Router } from "express";
+
+const router = Router();
 
 router.get("/:id/users", async (req, res) => {
   const { id } = req.params;
@@ -32,7 +31,7 @@ router.patch("/:id/users", async (req, res) => {
   const { email, role } = req.body;
 
   try {
-    const user = await getUserByEmail(email);
+    const user = await UserController.getUserByEmail(email);
 
     if (!user) {
       return res.status(404).send({ message: "User not found" });
@@ -44,7 +43,11 @@ router.patch("/:id/users", async (req, res) => {
 
     const userId = new ObjectId(user.id);
     const documentId = new ObjectId(id);
-    await setDocumentPrivateAccess(documentId, userId, PermissionsEnum[role]);
+    await DocumentAccessController.setDocumentPrivateAccess(
+      documentId,
+      userId,
+      PermissionsEnum[role]
+    );
 
     res.status(200).send("User updated successfully");
   } catch (err) {
@@ -62,7 +65,10 @@ router.get("/:id/role", async (req, res) => {
     const documentId = new ObjectId(id);
     const userId = new ObjectId(user);
 
-    const role = await getDocumentAccess(documentId, userId);
+    const role = await DocumentAccessController.getDocumentAccess(
+      documentId,
+      userId
+    );
 
     res.status(200).send({ role });
   } catch (err) {
@@ -70,4 +76,4 @@ router.get("/:id/role", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

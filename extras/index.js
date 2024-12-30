@@ -1,5 +1,4 @@
-const ObjectId = require("mongoose").Types.ObjectId;
+import { ObjectId } from "mongoose";
 
-module.exports = {
-  ObjectId,
-};
+export { ObjectId };
+

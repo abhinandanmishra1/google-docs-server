@@ -1,5 +1,4 @@
-const Document = require("../models/Document");
-const { ObjectId } = require("../extras");
+import { Document } from "../models/index.js";
 
 //#region createDocument
 const createDocument = async (data, userId) => {
@@ -235,7 +234,7 @@ const deleteDocument = async (id) => {
 };
 //#endregion
 
-module.exports = {
+export {
   createNewVersionDocument,
   createDocument,
   deleteDocument,

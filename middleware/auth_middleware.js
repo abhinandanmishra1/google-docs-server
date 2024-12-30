@@ -1,5 +1,5 @@
-const { default: axios } = require("axios");
-const { getUserByGoogleId } = require("../controllers/UserController");
+import { UserController } from "../controllers/index.js";
+import axios from "axios";
 
 async function authenticate(req, res, next) {
   const token = req.headers.authorization?.split(" ")?.[1];
@@ -29,7 +29,7 @@ async function authenticate(req, res, next) {
     }
 
     // Todo: implement cache inside this function to get user from userId
-    const user = await getUserByGoogleId(userInfo.user_id);
+    const user = await UserController.getUserByGoogleId(userInfo.user_id);
 
     if(user == null || user == undefined) {
       return res.status(403).json({
@@ -45,6 +45,4 @@ async function authenticate(req, res, next) {
   }
 }
 
-module.exports = {
-  authenticate
-};
+export { authenticate };

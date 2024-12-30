@@ -1,4 +1,4 @@
-const { Schema, model } = require("mongoose");
+import { Schema, model } from "mongoose";
 
 // every new instance of document opened will create a new version
 
@@ -28,4 +28,4 @@ const DocumentSchema = new Schema({
 
 const Document = model("Document", DocumentSchema);
 
-module.exports = Document;
+export default Document;
