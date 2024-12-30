@@ -3,6 +3,7 @@ import {
   UserController,
 } from "../controllers/index.js";
 
+import { ObjectId } from "../extras/index.js";
 import { PermissionsEnum } from "../enums/PermissionEnum.js";
 import { Router } from "express";
 
@@ -14,7 +15,7 @@ router.get("/:id/users", async (req, res) => {
   const documentId = new ObjectId(id);
 
   try {
-    const result = await getDocumentUsers(documentId, userId);
+    const result = await DocumentAccessController.getDocumentUsers(documentId, userId);
 
     if (!result) {
       return res.status(404).send({ message: "Document not found" });

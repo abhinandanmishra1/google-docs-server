@@ -1,4 +1,5 @@
-import { ObjectId } from "mongoose";
+import mongoose from "mongoose";
+
+const { ObjectId } = mongoose.Types;
 
 export { ObjectId };
-

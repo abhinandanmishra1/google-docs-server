@@ -79,10 +79,10 @@ router.get("", async (req, res) => {
 
   const { user: userInfo } = req;
 
-  const documentIds = await getDocumentIdsWithAccessType(ownedBy, userInfo.id);
+  const documentIds = await DocumentAccessController.getDocumentIdsWithAccessType(ownedBy, userInfo.id);
 
   try {
-    const result = await getDocumentListing(documentIds, limit, offset);
+    const result = await DocumentController.getDocumentListing(documentIds, limit, offset);
 
     res.status(201).send(result);
   } catch (err) {
@@ -94,20 +94,20 @@ router.post("", async (req, res) => {
   const { user: userInfo, body } = req;
 
   try {
-    const documentId = await createDocument(body, userInfo.id);
+    const documentId = await DocumentController.createDocument(body, userInfo.id);
 
     if (!documentId) {
       return res.status(500).send({ message: "something went wrong" });
     }
 
     // add public and private access
-    await setDocumentPrivateAccess(
+    await DocumentAccessController.setDocumentPrivateAccess(
       documentId,
       userInfo.id,
       PermissionsEnum.ALL,
       userInfo.id
     );
-    await setDocumentPublicAccess(documentId, 0, userInfo.id);
+    await DocumentAccessController.setDocumentPublicAccess(documentId, 0, userInfo.id);
 
     res.status(201).send({ id: documentId });
   } catch (err) {

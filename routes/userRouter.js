@@ -22,7 +22,6 @@ router.post("", async (req, res) => {
     };
 
     const user = await UserController.findOrCreateUser(createUserObject);
-
     if (!user) {
       return res
         .status(500)
@@ -33,7 +32,7 @@ router.post("", async (req, res) => {
       user,
     });
   } catch (err) {
-    res.status(500).send({ msg: "Internal Server Error" });
+    res.status(500).send({ msg: err.message || "Internal Server Error" });
   }
 });
 
